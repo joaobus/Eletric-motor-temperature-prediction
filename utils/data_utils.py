@@ -14,15 +14,19 @@ def normalize_data(df):
     return df_norm
 
 
-def ewma_ewms_features(df,spans):
-   '''
-   Calcutes EWMA and EWMS for a given set of spans
-    df: Pandas dataframe
-    spans: list of spans. EWMA and EWMS will be calculated for 
-            each and added as a feature
-   '''
-   df_features = df.copy()
+def add_extra_features(df,spans):
+   features = df.copy()
    shape = df.shape[1]
+
+   extra_feats = {
+    'i_s': lambda x: np.sqrt(x['i_d']**2 + x['i_q']**2),  # Current vector norm
+    'u_s': lambda x: np.sqrt(x['u_d']**2 + x['u_q']**2),  # Voltage vector norm
+    'S_el': lambda x: x['i_s']*x['u_s'],                  # Apparent power
+    'P_el': lambda x: x['i_d'] * x['u_d'] + x['i_q'] *x['u_q'],  # Effective power
+    'i_s_x_w': lambda x: x['i_s']*x['motor_speed'],
+    'S_x_w': lambda x: x['S_el']*x['motor_speed'],
+   }
+   df_features = features.assign(**extra_feats).copy()
    
    for key in df_features.keys()[0:shape]:
        for span in spans: 
@@ -32,18 +36,6 @@ def ewma_ewms_features(df,spans):
    df_features.fillna(method='bfill',inplace=True)
    return df_features
 
-
-def add_extra_features(df):
-    df_features = df.copy()
-    extra_feats = {
-     'i_s': lambda x: np.sqrt(x['i_d']**2 + x['i_q']**2),  # Current vector norm
-     'u_s': lambda x: np.sqrt(x['u_d']**2 + x['u_q']**2),  # Voltage vector norm
-     'S_el': lambda x: x['i_s']*x['u_s'],                  # Apparent power
-     'P_el': lambda x: x['i_d'] * x['u_d'] + x['i_q'] *x['u_q'],  # Effective power
-     'i_s_x_w': lambda x: x['i_s']*x['motor_speed'],
-     'S_x_w': lambda x: x['S_el']*x['motor_speed'],
-    }
-    return df_features.assign(**extra_feats)
 
 
 def batch_and_split(X,y,seq_length,

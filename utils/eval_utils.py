@@ -54,7 +54,7 @@ def get_test_metrics(model, test_ds, type: str, path: str):
                                 'yoke_r2':yoke_r2,'overall_r2':overall_r2},index=['valor']).transpose()
         
     else:
-        results = pd.DataFrame({'pm': y,'pm_pred': ypred})
+        results = pd.DataFrame({'pm': y[:],'pm_pred': ypred[:]})
         overall_r2 = r2_score(y, ypred)  
         
         metrics = pd.DataFrame({'mse':mse,'mae':mae,

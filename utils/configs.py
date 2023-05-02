@@ -1,5 +1,5 @@
 train_cfg = {
-    'batch_size':5000,
+    'batch_size':1000,
     'patience':10
 }
 

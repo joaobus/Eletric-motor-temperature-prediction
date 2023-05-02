@@ -13,6 +13,7 @@ from utils.data_utils import *
 from utils.configs import *
 from utils.eval_utils import plot_curves, get_test_metrics
 
+
 def load_dataset():
     df = pd.read_csv(r'data\measures_v2.csv')
     df_rotor = df.drop(['stator_winding','stator_tooth','stator_yoke'],axis=1).copy()
@@ -21,20 +22,20 @@ def load_dataset():
 
 
 def prepare_data(X, y, cfg):
-    df = X.copy()
-    df = normalize_data(df)
-    features = add_extra_features(df).copy()
-    features = ewma_ewms_features(features,cfg['spans'])
+    df_norm = normalize_data(X)
+    features = add_extra_features(df_norm,cfg['spans'])
     train_ds, val_ds, test_ds = batch_and_split(features,y,cfg['window'])
     return train_ds, val_ds, test_ds
 
 
-def compile_and_fit(train_data,val_data,test_data,
+def compile_and_fit(X, y,
                     model,
                     cfg: dict,
                     max_epochs: int = 20,
                     log: bool = False):
     
+    train_data, val_data, test_data = prepare_data(X, y, cfg)
+
     path = os.path.join('out',cfg['name'])
     if not os.path.exists(path):
         os.makedirs(path)
@@ -86,21 +87,31 @@ def main():
     y_stator = df_stator[['stator_winding','stator_tooth','stator_yoke']].copy()
     X = df_rotor.drop(['pm'],axis=1).copy()
 
-    r_train, r_val, r_test = prepare_data(X, y_rotor, rnn_rotor_cfg)
-    s_train, s_val, s_test = prepare_data(X, y_stator, rnn_stator_cfg)
-
     rotor_rnn = RNNRegressor(rnn_rotor_cfg)
     stator_rnn = RNNRegressor(rnn_stator_cfg)
+    rotor_tcn = TCNRegressor(tcn_rotor_cfg)
+    stator_tcn = TCNRegressor(tcn_stator_cfg)
 
-    model = compile_and_fit(r_train,r_val,r_test,
-                            rotor_rnn,
-                            rnn_rotor_cfg,
+    # model = compile_and_fit(X, y_rotor,
+    #                         rotor_rnn,
+    #                         rnn_rotor_cfg,
+    #                         max_epochs=2,
+    #                         log = False)
+    # model = compile_and_fit(X, y_stator,
+    #                         stator_rnn,
+    #                         rnn_stator_cfg,
+    #                         max_epochs=2,
+    #                         log = True)
+    model = compile_and_fit(X, y_rotor,
+                            rotor_tcn,
+                            tcn_rotor_cfg,
                             max_epochs=2,
-                            log = True)
-    # model, history = compile_and_fit(s_train,s_val,
-    #                                  stator_rnn,
-    #                                  rnn_stator_cfg,
-    #                                  log = True)
+                            log = False)
+    # model = compile_and_fit(X, y_stator,
+    #                         stator_tcn,
+    #                         tcn_stator_cfg,
+    #                         max_epochs=2,
+    #                         log = True)
 
 
 
