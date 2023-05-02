@@ -1,3 +1,6 @@
+# Checkpoint file
+out/checkpoint
+
 # Wandb file
 wandb/
 
