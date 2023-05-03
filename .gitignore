@@ -1,5 +1,5 @@
-# Checkpoint file
-out/checkpoint
+# .pb Keras model files
+*.pb
 
 # Wandb file
 wandb/
@@ -7,8 +7,8 @@ wandb/
 # VSCode workspace file
 *.code-workspace
 
-# CSV files
-*.csv
+# Dataset
+measures_v2.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

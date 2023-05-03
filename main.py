@@ -95,23 +95,23 @@ def main():
     # model = compile_and_fit(X, y_rotor,
     #                         rotor_rnn,
     #                         rnn_rotor_cfg,
-    #                         max_epochs=2,
+    #                         max_epochs=1,
     #                         log = False)
-    # model = compile_and_fit(X, y_stator,
-    #                         stator_rnn,
-    #                         rnn_stator_cfg,
-    #                         max_epochs=2,
-    #                         log = True)
-    model = compile_and_fit(X, y_rotor,
-                            rotor_tcn,
-                            tcn_rotor_cfg,
-                            max_epochs=2,
+    model = compile_and_fit(X, y_stator,
+                            stator_rnn,
+                            rnn_stator_cfg,
+                            max_epochs=1,
                             log = False)
+    # model = compile_and_fit(X, y_rotor,
+    #                         rotor_tcn,
+    #                         tcn_rotor_cfg,
+    #                         max_epochs=1,
+    #                         log = False)
     # model = compile_and_fit(X, y_stator,
     #                         stator_tcn,
     #                         tcn_stator_cfg,
-    #                         max_epochs=2,
-    #                         log = True)
+    #                         max_epochs=1,
+    #                         log = False)
 
 
 

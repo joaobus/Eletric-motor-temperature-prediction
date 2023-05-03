@@ -17,7 +17,8 @@ class RNNRegressor(keras.Model):
                                    kernel_regularizer=L2(self.cfg['reg_rate']))
         self.grad_noise = GaussianNoise(self.cfg['grad_noise'])
         self.dropout = Dropout(self.cfg['dropout_rate'])
-        self.flatten = Flatten()
+        self.avg_pool = GlobalAveragePooling1D()
+        # self.flatten = Flatten()
         self.dense = Dense(self.cfg['n_out'], activation='linear')
         self.residual_add = Add()
     
@@ -32,7 +33,7 @@ class RNNRegressor(keras.Model):
             if i > 0:
                 # Residual add can only be applied to the hidden layers so as to match shape 
                 x = self.residual_add([x,inputs])
-        x = self.flatten(x)
+        x = self.avg_pool(x)
         return self.dense(x)
     
     
