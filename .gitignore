@@ -1,3 +1,6 @@
+# nohup output file
+nohup.out
+
 # .pb Keras model files
 *.pb
 
