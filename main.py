@@ -2,7 +2,6 @@ import pandas as pd
 import wandb
 import os
 import pickle
-import keras.backend as K
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.optimizers import Adam 
@@ -15,7 +14,7 @@ from utils.eval_utils import plot_curves, get_test_metrics
 
 
 def load_dataset():
-    df = pd.read_csv(r'data\measures_v2.csv')
+    df = pd.read_csv('data/measures_v2.csv')
     df_rotor = df.drop(['stator_winding','stator_tooth','stator_yoke'],axis=1).copy()
     df_stator = df.drop(['pm'],axis=1).copy()
     return df_rotor, df_stator
@@ -28,11 +27,15 @@ def prepare_data(X, y, cfg):
     return train_ds, val_ds, test_ds
 
 
-def compile_and_fit(X, y,
-                    model,
+def compile_and_fit(X, y, model,
                     cfg: dict,
                     max_epochs: int = 20,
-                    log: bool = False):
+                    log: bool = False,
+                    resume_training: bool = False,
+                    pretrained_path = None):
+    
+    if pretrained_path is not None:
+        model.load_weights(pretrained_path)
     
     train_data, val_data, test_data = prepare_data(X, y, cfg)
 
@@ -53,7 +56,9 @@ def compile_and_fit(X, y,
                 'dataset': 'electric-motor-temperature',
                 'epochs': max_epochs,
                 'patience':train_cfg['patience'],
-                } | cfg
+                } | cfg, 
+
+                resume=resume_training
             )
         
         logger = WandbMetricsLogger()
@@ -82,6 +87,8 @@ def compile_and_fit(X, y,
 
 
 def main():
+    print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+
     df_rotor, df_stator = load_dataset()
     y_rotor = df_rotor['pm'].copy()
     y_stator = df_stator[['stator_winding','stator_tooth','stator_yoke']].copy()
@@ -101,7 +108,7 @@ def main():
                             stator_rnn,
                             rnn_stator_cfg,
                             max_epochs=1,
-                            log = False)
+                            log = True)
     # model = compile_and_fit(X, y_rotor,
     #                         rotor_tcn,
     #                         tcn_rotor_cfg,

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import keras
 
-from keras.layers import LSTM, GaussianNoise, Flatten, Dense, Add, Dropout, Conv1D, MaxPool1D, GlobalAveragePooling1D
+from keras.layers import LSTM, GaussianNoise, Dense, Add, Dropout, Conv1D, MaxPool1D, GlobalAveragePooling1D
 from keras.regularizers import L2
 
 
@@ -18,7 +18,6 @@ class RNNRegressor(keras.Model):
         self.grad_noise = GaussianNoise(self.cfg['grad_noise'])
         self.dropout = Dropout(self.cfg['dropout_rate'])
         self.avg_pool = GlobalAveragePooling1D()
-        # self.flatten = Flatten()
         self.dense = Dense(self.cfg['n_out'], activation='linear')
         self.residual_add = Add()
     
@@ -51,7 +50,6 @@ class TCNRegressor(keras.Model):
         self.dropout = Dropout(self.cfg['dropout_rate'])
         self.max_pooling = MaxPool1D(pool_size=self.cfg['window'])
         self.avg_pool = GlobalAveragePooling1D()
-        # self.flatten = Flatten()
         self.dense = Dense(self.cfg['n_out'], activation='linear')
         self.residual_add = Add()
 
