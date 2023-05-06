@@ -102,26 +102,29 @@ def main():
     rotor_tcn = TCNRegressor(tcn_rotor_cfg)
     stator_tcn = TCNRegressor(tcn_stator_cfg)
 
-    model = compile_and_fit(X, y_rotor,
-                            rotor_rnn,
-                            rnn_rotor_cfg,
-                            max_epochs=1,
-                            log = True)
+    MAX_EPOCHS = 200
+    LOG = False
+
+    # model = compile_and_fit(X, y_rotor,
+    #                         rotor_rnn,
+    #                         rnn_rotor_cfg,
+    #                         max_epochs=MAX_EPOCHS,
+    #                         log = LOG)
     model = compile_and_fit(X, y_stator,
                             stator_rnn,
                             rnn_stator_cfg,
-                            max_epochs=1,
-                            log = True)
+                            max_epochs=MAX_EPOCHS,
+                            log = LOG)
     model = compile_and_fit(X, y_rotor,
                             rotor_tcn,
                             tcn_rotor_cfg,
-                            max_epochs=1,
-                            log = True)
+                            max_epochs=MAX_EPOCHS,
+                            log = LOG)
     model = compile_and_fit(X, y_stator,
                             stator_tcn,
                             tcn_stator_cfg,
-                            max_epochs=1,
-                            log = True)
+                            max_epochs=MAX_EPOCHS,
+                            log = LOG)
 
 
 
