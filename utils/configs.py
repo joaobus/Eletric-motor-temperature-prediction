@@ -1,5 +1,5 @@
 train_cfg = {
-    'batch_size':1000,
+    'batch_size':5000,
     'patience':10
 }
 
@@ -26,7 +26,7 @@ rnn_rotor_cfg = {
     'name':'RNN_rotor',
     'type':'rnn',
     'target':'rotor',
-    'n_out':1,
+    'n_out': 1,
     'n_hidden': 1,
     'spans': [1500,2000,4000,7000],
     'n_units': 4,

@@ -2,6 +2,7 @@ import pandas as pd
 import wandb
 import os
 import pickle
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras.optimizers import Adam 
@@ -64,6 +65,8 @@ def compile_and_fit(X, y, model,
         logger = WandbMetricsLogger()
         callbacks.append(logger)
     
+    model.build([None, cfg['window'], 87])
+
     model.compile(loss=tf.keras.losses.MeanSquaredError(),
                   optimizer=Adam(learning_rate=cfg['lr'], 
                                  clipnorm=cfg['grad_norm'], 
@@ -99,26 +102,26 @@ def main():
     rotor_tcn = TCNRegressor(tcn_rotor_cfg)
     stator_tcn = TCNRegressor(tcn_stator_cfg)
 
-    # model = compile_and_fit(X, y_rotor,
-    #                         rotor_rnn,
-    #                         rnn_rotor_cfg,
-    #                         max_epochs=1,
-    #                         log = False)
+    model = compile_and_fit(X, y_rotor,
+                            rotor_rnn,
+                            rnn_rotor_cfg,
+                            max_epochs=1,
+                            log = True)
     model = compile_and_fit(X, y_stator,
                             stator_rnn,
                             rnn_stator_cfg,
                             max_epochs=1,
                             log = True)
-    # model = compile_and_fit(X, y_rotor,
-    #                         rotor_tcn,
-    #                         tcn_rotor_cfg,
-    #                         max_epochs=1,
-    #                         log = False)
-    # model = compile_and_fit(X, y_stator,
-    #                         stator_tcn,
-    #                         tcn_stator_cfg,
-    #                         max_epochs=1,
-    #                         log = False)
+    model = compile_and_fit(X, y_rotor,
+                            rotor_tcn,
+                            tcn_rotor_cfg,
+                            max_epochs=1,
+                            log = True)
+    model = compile_and_fit(X, y_stator,
+                            stator_tcn,
+                            tcn_stator_cfg,
+                            max_epochs=1,
+                            log = True)
 
 
 

@@ -31,8 +31,8 @@ def get_test_metrics(model, test_ds, type: str, path: str):
 
     assert type in ['stator','rotor'], 'Invalid type'
     
-    y = np.concatenate([y for x, y in test_ds], axis=0).tolist()
-    ypred = np.array(model.predict(test_ds, batch_size=train_cfg['batch_size'])).tolist()
+    y = np.concatenate([y for x, y in test_ds], axis=0)#.tolist()
+    ypred = np.array(model.predict(test_ds, batch_size=train_cfg['batch_size']))#.tolist()
     
     mse = tf.keras.metrics.MeanSquaredError()(y, ypred)
     mae = tf.keras.metrics.MeanAbsoluteError()(y, ypred)
@@ -51,10 +51,10 @@ def get_test_metrics(model, test_ds, type: str, path: str):
         
         metrics = pd.DataFrame({'mse':mse.numpy(),'mae':mae.numpy(),'rmse':rmse.numpy(),
                                 'winding_r2':winding_r2,'tooth_r2':tooth_r2,
-                                'yoke_r2':yoke_r2,'overall_r2':overall_r2},index=['valor']).transpose()
+                                'yoke_r2':yoke_r2,'overall_r2':overall_r2},index=['value']).transpose()
         
     else:
-        results = pd.DataFrame({'pm': y,'pm_pred': ypred})
+        results = pd.DataFrame({'pm': y,'pm_pred': ypred[:,0]})
         overall_r2 = r2_score(y, ypred)  
         
         metrics = pd.DataFrame({'mse':mse.numpy(),'mae':mae.numpy(),
