@@ -1,4 +1,5 @@
 *.sh
+*.h5
 
 # nohup output file
 nohup.out

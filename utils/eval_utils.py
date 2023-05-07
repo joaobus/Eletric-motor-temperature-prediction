@@ -31,8 +31,8 @@ def get_test_metrics(model, test_ds, type: str, path: str):
 
     assert type in ['stator','rotor'], 'Invalid type'
     
-    y = np.concatenate([y for x, y in test_ds], axis=0)#.tolist()
-    ypred = np.array(model.predict(test_ds, batch_size=train_cfg['batch_size']))#.tolist()
+    y = np.concatenate([y for x, y in test_ds], axis=0)
+    ypred = np.array(model.predict(test_ds, batch_size=train_cfg['batch_size']))
     
     mse = tf.keras.metrics.MeanSquaredError()(y, ypred)
     mae = tf.keras.metrics.MeanAbsoluteError()(y, ypred)
