@@ -56,9 +56,9 @@ def batch_and_split(X,y,seq_length,
     val_ds = ds.skip(train_batches).take(val_batches)
     test_ds = ds.skip(train_batches + val_batches)
     
-    print(f"\nTamanho do dataset de treino: {len(train_ds)}") 
-    print(f"Tamanho do dataset de validação: {len(val_ds)}")
-    print(f"Tamanho do dataset de teste: {len(test_ds)}\n")
+    print(f"Batches in the training dataset: {len(train_ds)}") 
+    print(f"Batches in the validation dataset: {len(val_ds)}")
+    print(f"Batches in the test dataset: {len(test_ds)}\n")
     
     return train_ds, val_ds, test_ds
 

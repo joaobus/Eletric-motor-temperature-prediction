@@ -1,5 +1,6 @@
 *.sh
 *.h5
+memUsage.txt
 
 # nohup output file
 nohup.out
@@ -15,6 +16,7 @@ wandb/
 
 # Dataset
 measures_v2.csv
+train_predictions.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

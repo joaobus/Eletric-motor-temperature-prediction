@@ -27,12 +27,12 @@ def plot_curves(history, path: str):
     plt.savefig(os.path.join(path,'training_curves.png'))
     
     
-def get_test_metrics(model, test_ds, type: str, path: str):
+def get_metrics(model, ds, type: str, index: str = 'value'):
 
     assert type in ['stator','rotor'], 'Invalid type'
     
-    y = np.concatenate([y for x, y in test_ds], axis=0)
-    ypred = np.array(model.predict(test_ds, batch_size=train_cfg['batch_size']))
+    y = np.concatenate([y for x, y in ds], axis=0)
+    ypred = np.array(model.predict(ds, batch_size=train_cfg['batch_size']))
     
     mse = tf.keras.metrics.MeanSquaredError()(y, ypred)
     mae = tf.keras.metrics.MeanAbsoluteError()(y, ypred)
@@ -51,14 +51,13 @@ def get_test_metrics(model, test_ds, type: str, path: str):
         
         metrics = pd.DataFrame({'mse':mse.numpy(),'mae':mae.numpy(),'rmse':rmse.numpy(),
                                 'winding_r2':winding_r2,'tooth_r2':tooth_r2,
-                                'yoke_r2':yoke_r2,'overall_r2':overall_r2},index=['value']).transpose()
+                                'yoke_r2':yoke_r2,'overall_r2':overall_r2},index=[index]).transpose()
         
     else:
         results = pd.DataFrame({'pm': y,'pm_pred': ypred[:,0]})
         overall_r2 = r2_score(y, ypred)  
         
         metrics = pd.DataFrame({'mse':mse.numpy(),'mae':mae.numpy(),
-                                'rmse':rmse.numpy(),'r2':overall_r2},index=['valor']).transpose()
+                                'rmse':rmse.numpy(),'r2':overall_r2},index=[index]).transpose()
     
-    results.to_csv(os.path.join(path,'results.csv'))
-    metrics.to_csv(os.path.join(path,'metrics.csv'))
+    return results, metrics
