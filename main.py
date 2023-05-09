@@ -83,7 +83,7 @@ class Session:
                                             clipvalue=self.cfg['grad_clip']),
                             metrics=[tf.keras.metrics.MeanAbsoluteError()])
         
-        print(f"Training model: {self.cfg['name']}\n\n")
+        print(f"Training model: {self.cfg['name']}\n")
         
         history = self.model.fit(self.train_ds, epochs=max_epochs,
                                 validation_data=self.val_ds,
@@ -101,6 +101,11 @@ class Session:
     
     
     def get_model_metrics(self, save_dir = None):
+
+        path = save_dir if save_dir is not None else self.out_path
+        if not os.path.exists(path):
+           os.makedirs(path)
+
         print('Getting test metrics...')
         test_predictions, test_metrics = get_metrics(self.model, self.test_ds, self.cfg['target'], index='test')
         print('Getting val metrics...')
