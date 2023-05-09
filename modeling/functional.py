@@ -1,16 +1,16 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D,\
-    Activation, MaxPool1D
-from tensorflow.keras import models, optimizers as opts
+from keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D, MaxPool1D
+from keras import models, optimizers as opts
+from utils.configs import train_cfg, rnn_rotor_cfg, rnn_stator_cfg, tcn_rotor_cfg, tcn_stator_cfg
 
 
 def rnn_stator_model():
-    n_targets = 3
-    n_units = 256
+    n_targets = rnn_stator_cfg['n_out']
+    n_units = rnn_stator_cfg['n_units']
 
     # x = tf.keras.Input(shape=(1, 91))
-    x = tf.keras.Input(shape=(42, 84))
+    x = tf.keras.Input(shape=(rnn_stator_cfg['window'], train_cfg['n_features']))
     x_before = x
     # layer 1
     y = LSTM(units=n_units)(x)
@@ -29,11 +29,13 @@ def rnn_stator_model():
 
 
 def rnn_rotor_model():
-    n_targets = 1
-    x = tf.keras.Input(shape=(128, 84))
+    n_targets = rnn_rotor_cfg['n_out']
+    n_units = rnn_rotor_cfg['n_units']
+
+    x = tf.keras.Input(shape=(rnn_rotor_cfg['window'], train_cfg['n_features']))
     x_before = x
-    y = LSTM(units=4)(x)
-    x_dense = Dense(4, activation='relu')(x_before)
+    y = LSTM(units=n_units)(x)
+    x_dense = Dense(n_units, activation='relu')(x_before)
     y = add([x_dense, y])
     y = Flatten()(y)
     y = Dense(n_targets)(y)
@@ -43,10 +45,10 @@ def rnn_rotor_model():
 
 def cnn_stator_model():
     # input shape: window_size x len(x_cols)
-    n_units = 121
-    l_kernel = 6
-    w = 32
-    x = Input((w, 84))
+    n_units = tcn_stator_cfg['n_units']
+    l_kernel = tcn_stator_cfg['kernel_size']
+    w = tcn_stator_cfg['window']
+    x = Input((w, train_cfg['n_features']))
     # tf.keras knows no causal padding :(
     # layer 1
     y = Conv1D(filters=n_units, kernel_size=l_kernel, activation='relu',
@@ -68,7 +70,7 @@ def cnn_stator_model():
 
     y = MaxPool1D(pool_size=w)(y)
     y = Flatten()(y)
-    y = Dense(units=3)(y)
+    y = Dense(units=tcn_stator_cfg['n_out'])(y)
 
     model = models.Model(inputs=x, outputs=y)
     return model
@@ -76,19 +78,21 @@ def cnn_stator_model():
 
 def cnn_rotor_model():
     # input shape: window_size x len(x_cols)
-    x = Input((33, 84), name='input_62')
-    y = Conv1D(filters=126, kernel_size=2, padding='same', activation='relu')(x)
+    n_units = tcn_rotor_cfg['n_units']
+    l_kernel = tcn_rotor_cfg['kernel_size']
+    x = Input((tcn_rotor_cfg['window'], train_cfg['n_features']), name='input_62')
+    y = Conv1D(filters=n_units, kernel_size=l_kernel, padding='same', activation='relu')(x)
 
-    y = Conv1D(filters=126, kernel_size=2, padding='same',
+    y = Conv1D(filters=n_units, kernel_size=l_kernel, padding='same',
                       dilation_rate=2, activation='relu')(y)
 
-    shortcut = Conv1D(filters=126, kernel_size=1,
+    shortcut = Conv1D(filters=n_units, kernel_size=1,
                              dilation_rate=2, padding='same')(x)
     y = add([shortcut, y])
 
-    y = MaxPool1D(pool_size=33)(y)
+    y = MaxPool1D(pool_size=tcn_rotor_cfg['window'])(y)
     y = Flatten()(y)
-    y = Dense(units=1)(y)
+    y = Dense(units=tcn_rotor_cfg['n_out'])(y)
 
     model = models.Model(inputs=x, outputs=y)
     return model
