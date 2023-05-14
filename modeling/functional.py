@@ -5,12 +5,12 @@ from keras import models, optimizers as opts
 from utils.configs import train_cfg, rnn_rotor_cfg, rnn_stator_cfg, tcn_rotor_cfg, tcn_stator_cfg
 
 
-def rnn_stator_model():
+def rnn_stator_model(n_features):
     n_targets = rnn_stator_cfg['n_out']
     n_units = rnn_stator_cfg['n_units']
 
     # x = tf.keras.Input(shape=(1, 91))
-    x = tf.keras.Input(shape=(rnn_stator_cfg['window'], train_cfg['n_features']))
+    x = tf.keras.Input(shape=(rnn_stator_cfg['window'], n_features))
     x_before = x
     # layer 1
     y = LSTM(units=n_units)(x)
@@ -28,11 +28,11 @@ def rnn_stator_model():
     return model
 
 
-def rnn_rotor_model():
+def rnn_rotor_model(n_features):
     n_targets = rnn_rotor_cfg['n_out']
     n_units = rnn_rotor_cfg['n_units']
 
-    x = tf.keras.Input(shape=(rnn_rotor_cfg['window'], train_cfg['n_features']))
+    x = tf.keras.Input(shape=(rnn_rotor_cfg['window'], n_features))
     x_before = x
     y = LSTM(units=n_units)(x)
     x_dense = Dense(n_units, activation='relu')(x_before)
@@ -43,12 +43,12 @@ def rnn_rotor_model():
     return model
 
 
-def cnn_stator_model():
+def cnn_stator_model(n_features):
     # input shape: window_size x len(x_cols)
     n_units = tcn_stator_cfg['n_units']
     l_kernel = tcn_stator_cfg['kernel_size']
     w = tcn_stator_cfg['window']
-    x = Input((w, train_cfg['n_features']))
+    x = Input((w, n_features))
     # tf.keras knows no causal padding :(
     # layer 1
     y = Conv1D(filters=n_units, kernel_size=l_kernel, activation='relu',
@@ -76,11 +76,11 @@ def cnn_stator_model():
     return model
 
 
-def cnn_rotor_model():
+def cnn_rotor_model(n_features):
     # input shape: window_size x len(x_cols)
     n_units = tcn_rotor_cfg['n_units']
     l_kernel = tcn_rotor_cfg['kernel_size']
-    x = Input((tcn_rotor_cfg['window'], train_cfg['n_features']), name='input_62')
+    x = Input((tcn_rotor_cfg['window'], n_features))
     y = Conv1D(filters=n_units, kernel_size=l_kernel, padding='same', activation='relu')(x)
 
     y = Conv1D(filters=n_units, kernel_size=l_kernel, padding='same',

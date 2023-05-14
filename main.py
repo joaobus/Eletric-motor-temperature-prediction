@@ -125,23 +125,24 @@ class Session:
 
 def main():
     
+    N_FEATURES = 135
     MAX_EPOCHS = 300
     LOG = False
 
-    # rotor_rnn = Session(rnn_rotor_model(), rnn_rotor_cfg)
+    # rotor_rnn = Session(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg)
     # rotor_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # rotor_rnn.get_model_metrics()
     
-    stator_rnn = Session(rnn_stator_model(), rnn_stator_cfg)
+    stator_rnn = Session(rnn_stator_model(N_FEATURES), rnn_stator_cfg)
     stator_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     stator_rnn.get_model_metrics()
     
-    # rotor_tcn = Session(cnn_rotor_model(), tcn_rotor_cfg)
+    # rotor_tcn = Session(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg)
     # rotor_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # # rotor_tcn.load_model_weights('out/TCN_rotor/model.h5')
     # rotor_tcn.get_model_metrics()
 
-    # stator_tcn = Session(cnn_stator_model(), tcn_stator_cfg)
+    # stator_tcn = Session(cnn_stator_model(N_FEATURES), tcn_stator_cfg)
     # # stator_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # stator_tcn.load_model_weights('out/TCN_stator/model.h5')
     # stator_tcn.get_model_metrics()

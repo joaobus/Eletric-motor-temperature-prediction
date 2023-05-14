@@ -1,7 +1,6 @@
 train_cfg = {
     'batch_size':5000,
     'patience':10,
-    'n_features':84
 }
 
 

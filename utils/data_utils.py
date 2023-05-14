@@ -16,19 +16,18 @@ def normalize_data(df):
 
 def add_extra_features(df,spans):
    features = df.copy()
-   shape = df.shape[1]
 
    extra_feats = {
     'i_s': lambda x: np.sqrt(x['i_d']**2 + x['i_q']**2),  # Current vector norm
     'u_s': lambda x: np.sqrt(x['u_d']**2 + x['u_q']**2),  # Voltage vector norm
-    # 'S_el': lambda x: x['i_s']*x['u_s'],                  # Apparent power
+    'S_el': lambda x: x['i_s']*x['u_s'],                  # Apparent power
     'P_el': lambda x: x['i_d'] * x['u_d'] + x['i_q'] *x['u_q'],  # Effective power
-    # 'i_s_x_w': lambda x: x['i_s']*x['motor_speed'],
-    # 'S_x_w': lambda x: x['S_el']*x['motor_speed'],
+    'i_s_x_w': lambda x: x['i_s']*x['motor_speed'],
+    'S_x_w': lambda x: x['S_el']*x['motor_speed'],
    }
    df_features = features.assign(**extra_feats).copy()
    
-   for key in df_features.keys()[0:shape]:
+   for key in df_features.keys():
        for span in spans: 
            df_features[key + '_ewma_' + str(span)] = df_features[key].ewm(span=span).mean()
            df_features[key + '_ewms_' + str(span)] = df_features[key].ewm(span=span).std()
