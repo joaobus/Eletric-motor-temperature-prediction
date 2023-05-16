@@ -1,25 +1,31 @@
 import numpy as np
 import tensorflow as tf
-from keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D, MaxPool1D
+from keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D, MaxPool1D, SpatialDropout1D, GaussianNoise
 from keras import models, optimizers as opts
-from utils.configs import train_cfg, rnn_rotor_cfg, rnn_stator_cfg, tcn_rotor_cfg, tcn_stator_cfg
+from keras import regularizers
+from utils.configs import rnn_rotor_cfg, rnn_stator_cfg, tcn_rotor_cfg, tcn_stator_cfg
 
 
 def rnn_stator_model(n_features):
     n_targets = rnn_stator_cfg['n_out']
     n_units = rnn_stator_cfg['n_units']
 
-    # x = tf.keras.Input(shape=(1, 91))
     x = tf.keras.Input(shape=(rnn_stator_cfg['window'], n_features))
     x_before = x
     # layer 1
-    y = LSTM(units=n_units)(x)
+    y = LSTM(units=n_units,
+             dropout=rnn_stator_cfg['dropout_rate'],
+             kernel_regularizer=regularizers.L2(rnn_stator_cfg['reg_rate']))(x)
+    y = GaussianNoise(rnn_stator_cfg['grad_noise'])(y)
     x_dense = Dense(n_units, activation='relu')(x_before)
     y = add([x_dense, y])
 
     # layer 2
     y_before = y
-    y = LSTM(units=n_units)(y)
+    y = LSTM(units=n_units,
+             dropout=rnn_stator_cfg['dropout_rate'],
+             kernel_regularizer=regularizers.L2(rnn_stator_cfg['reg_rate']))(y)
+    y = GaussianNoise(rnn_stator_cfg['grad_noise'])(y)
     y = add([y_before, y])
 
     y = Flatten()(y)
@@ -34,7 +40,10 @@ def rnn_rotor_model(n_features):
 
     x = tf.keras.Input(shape=(rnn_rotor_cfg['window'], n_features))
     x_before = x
-    y = LSTM(units=n_units)(x)
+    y = LSTM(units=n_units,
+             dropout=rnn_rotor_cfg['dropout_rate'],
+             kernel_regularizer=regularizers.L2(rnn_rotor_cfg['reg_rate']))(x)
+    y = GaussianNoise(rnn_rotor_cfg['grad_noise'])(y)
     x_dense = Dense(n_units, activation='relu')(x_before)
     y = add([x_dense, y])
     y = Flatten()(y)
@@ -58,6 +67,7 @@ def cnn_stator_model(n_features):
                padding='same', dilation_rate=2)(y)
     shortcut = Conv1D(filters=n_units, kernel_size=1, dilation_rate=2,
                       padding='same')(x)
+    y = SpatialDropout1D(tcn_stator_cfg['dropout_rate'])(y)
     y = add([shortcut, y])
 
     shortcut = y
@@ -66,6 +76,7 @@ def cnn_stator_model(n_features):
     # layer 4
     y = Conv1D(filters=n_units, kernel_size=l_kernel, activation='relu',
                padding='same', dilation_rate=4)(y)
+    y = SpatialDropout1D(tcn_stator_cfg['dropout_rate'])(y)
     y = add([shortcut, y])
 
     y = MaxPool1D(pool_size=w)(y)
@@ -88,6 +99,7 @@ def cnn_rotor_model(n_features):
 
     shortcut = Conv1D(filters=n_units, kernel_size=1,
                              dilation_rate=2, padding='same')(x)
+    y = SpatialDropout1D(tcn_stator_cfg['dropout_rate'])(y)
     y = add([shortcut, y])
 
     y = MaxPool1D(pool_size=tcn_rotor_cfg['window'])(y)

@@ -1,6 +1,8 @@
 *.sh
 *.h5
 memUsage.txt
+test.py
+out*.txt
 
 # nohup output file
 nohup.out

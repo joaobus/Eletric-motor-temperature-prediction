@@ -14,6 +14,18 @@ from utils.data_utils import *
 from utils.configs import *
 from utils.eval_utils import plot_curves, get_metrics
 
+import warnings
+
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
+# Limit GPU usage
+total = 49152
+limit = total // 5
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_virtual_device_configuration(gpu,[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=limit)])
+
 
 class Session:
     def __init__(self, model, cfg):
@@ -55,7 +67,7 @@ class Session:
         
         reduce = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=train_cfg['patience'])
         early = EarlyStopping(monitor='val_loss', patience=2*train_cfg['patience'], mode='auto')
-        checkpoint = ModelCheckpoint(os.path.join(self.out_path,'model.h5'), monitor='val_loss', save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(os.path.join(self.out_path,'model.h5'), monitor='val_loss', save_best_only=False, mode='min')
         csv_logger = CSVLogger(os.path.join(self.out_path,'history_log.csv'), append=resume_training)
         callbacks = [reduce, early, checkpoint, csv_logger]
 
@@ -126,26 +138,26 @@ class Session:
 def main():
     
     N_FEATURES = 135
-    MAX_EPOCHS = 300
-    LOG = False
+    MAX_EPOCHS = 100
+    LOG = True
 
     # rotor_rnn = Session(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg)
     # rotor_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # rotor_rnn.get_model_metrics()
     
-    stator_rnn = Session(rnn_stator_model(N_FEATURES), rnn_stator_cfg)
-    stator_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
-    stator_rnn.get_model_metrics()
+    # stator_rnn = Session(rnn_stator_model(N_FEATURES), rnn_stator_cfg)
+    # stator_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
+    # stator_rnn.get_model_metrics()
     
     # rotor_tcn = Session(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg)
     # rotor_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # # rotor_tcn.load_model_weights('out/TCN_rotor/model.h5')
     # rotor_tcn.get_model_metrics()
 
-    # stator_tcn = Session(cnn_stator_model(N_FEATURES), tcn_stator_cfg)
-    # # stator_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
+    stator_tcn = Session(cnn_stator_model(N_FEATURES), tcn_stator_cfg)
+    stator_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG)
     # stator_tcn.load_model_weights('out/TCN_stator/model.h5')
-    # stator_tcn.get_model_metrics()
+    stator_tcn.get_model_metrics()
     
 
 

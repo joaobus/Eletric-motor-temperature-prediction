@@ -24,7 +24,7 @@ def pfi(X, y, model, seq_length,
   base_error = model.evaluate(ds)[0]
 
   for key in tqdm(X.keys()):
-    X_perm = X.copy()
+    X_perm = X.copy().reset_index(drop=True)
     X_perm[key] = X_perm[key].sample(frac=1).reset_index(drop=True)
     ds_perm = tf.keras.utils.timeseries_dataset_from_array(
                           X_perm[:-1],
@@ -37,3 +37,12 @@ def pfi(X, y, model, seq_length,
     feature_importance = {key: perm_error / base_error}
     fi_values = fi_values | feature_importance
   return fi_values
+
+
+
+class PFIExplainer():
+  def __init__(self):
+    pass
+
+  def feature_importance(self):
+    pass
