@@ -31,7 +31,7 @@ rnn_rotor_cfg = {
     'spans': [1500,2000,4000,7000],
     'n_units': 4,
     'window': 128,
-    'lr': 1e-2,
+    'lr': 1e-2 / 10,
     'reg_rate': 0.1,
     'dropout_rate': 0.5,
     'grad_norm': 0.25,
