@@ -1,11 +1,10 @@
 import pandas as pd
 import wandb
 import os
-import pickle
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
-from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
-from keras.optimizers import Adam 
+from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger # type:ignore
+from keras.optimizers import Adam  # type:ignore
 from wandb.keras import WandbMetricsLogger
 
 from modeling.subclass import RNNRegressor, TCNRegressor
@@ -13,6 +12,7 @@ from modeling.functional import cnn_rotor_model, cnn_stator_model, rnn_rotor_mod
 from utils.data_utils import *
 from utils.configs import *
 from utils.eval_utils import plot_curves, get_metrics
+from explain.feature_importance import PFIExplainer
 
 import warnings
 
@@ -53,6 +53,11 @@ class Session:
     
 
     def load_model_weights(self, path):
+        self.model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                            optimizer=Adam(learning_rate=self.cfg['lr'], 
+                                            clipnorm=self.cfg['grad_norm'], 
+                                            clipvalue=self.cfg['grad_clip']),
+                            metrics=[tf.keras.metrics.MeanAbsoluteError()])
         self.model.load_weights(path)
         return self
 
@@ -135,34 +140,42 @@ class Session:
         metrics.to_csv(os.path.join(path,'metrics.csv'))
 
 
-def main():
-    
-    N_FEATURES = 135
+
+def train_model(model, cfg, load_path):
     MAX_EPOCHS = 500
     LOG = True
     RESUME = False
+    SAMPLE = 500000
 
-    # rotor_rnn = Session(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg)
-    # # rotor_rnn.load_model_weights('out/RNN_rotor/model.h5')    
-    # rotor_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    # rotor_rnn.get_model_metrics()
-    
-    # stator_rnn = Session(rnn_stator_model(N_FEATURES), rnn_stator_cfg)
-    # # stator_rnn.load_model_weights('out/RNN_stator/model.h5')
-    # stator_rnn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    # stator_rnn.get_model_metrics()
-    
-    rotor_tcn = Session(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg)
-    rotor_tcn.load_model_weights('out/TCN_rotor/model.h5')
-    # rotor_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    rotor_tcn.get_model_metrics()
+    session = Session(model, cfg)
+    session.load_model_weights(load_path)    
+    # session.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
+    # session.get_model_metrics()
+    explainer = PFIExplainer(session.model, session.cfg)
+    fi = explainer.feature_importance(session.features[-SAMPLE:], session.targets[-SAMPLE:])
+    explainer.plot_pfi(fi, os.path.join(session.out_path, 'pfi'))
 
-    # stator_tcn = Session(cnn_stator_model(N_FEATURES), tcn_stator_cfg)
-    # # stator_tcn.load_model_weights('out/TCN_stator/model.h5')
-    # stator_tcn.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    # stator_tcn.get_model_metrics()
-    
 
 
 if __name__ == '__main__':
-    main()
+    N_FEATURES = 135
+
+    # train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5')
+    # train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5')
+    # train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5')
+    train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5')
+
+    # from multiprocessing import Process
+
+    # args = [
+    #     (rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5'),
+    #     (rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5'),
+    #     (cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5'),
+    #     (cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5')
+    # ]
+
+    # for arg in args:
+    #     p = Process(target=train_model, args=arg)
+    #     p.start()
+
+
