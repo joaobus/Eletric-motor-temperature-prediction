@@ -1,8 +1,8 @@
 import numpy as np
-import tensorflow as tf
-from keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D, MaxPool1D, SpatialDropout1D, GaussianNoise
-from keras import models, optimizers as opts
-from keras import regularizers
+import tensorflow as tf # type:ignore
+from keras.layers import Input, LSTM, Dense, Flatten, add, Conv1D, MaxPool1D, SpatialDropout1D, GaussianNoise # type:ignore
+from keras import models, optimizers as opts # type:ignore
+from keras import regularizers # type:ignore
 from utils.configs import rnn_rotor_cfg, rnn_stator_cfg, tcn_rotor_cfg, tcn_stator_cfg
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf
+import tensorflow as tf # type:ignore
 from utils.configs import train_cfg
 
 def normalize_data(df):

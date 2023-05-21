@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
+import tensorflow as tf # type:ignore
 import pandas as pd
 from sklearn.metrics import r2_score
 from utils.configs import train_cfg
