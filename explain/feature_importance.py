@@ -4,6 +4,8 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import shap
+
 from tqdm import tqdm
 
 
@@ -69,3 +71,37 @@ class PFIExplainer():
     plt.savefig(os.path.join(out_dir,f'fi_{self.cfg["name"]}.png'), bbox_inches="tight")
     if show:
       plt.show()
+
+
+
+class SHAPExplainer:
+  '''
+  Shapley Additive Explanations. Wraps the GradientExplainer class from the SHAP library (https://github.com/slundberg/shap)
+  References:
+    https://arxiv.org/abs/1705.07874
+    https://christophm.github.io/interpretable-ml-book/shap.html#definition 
+  '''
+  def __init__(self, model, cfg, background, test):
+    self.model = model
+    self.cfg = cfg
+    self.background = background
+    self.test = test
+
+  def feature_importance(self):
+    e = shap.GradientExplainer(self.model, self.background)
+    shap_values = np.array(e.shap_values(self.test))
+    shap_values = np.mean(shap_values, axis=(0,2)) # Average out the prediction window
+    return shap_values
+
+  def plot_shap_values(self, shap_values, out_dir, 
+                       feature_names=None, 
+                       show = False,
+                       max_display = 50):
+
+    if not os.path.exists(out_dir):
+      os.makedirs(out_dir)
+
+    shap.summary_plot(shap_values, show=show, feature_names=feature_names, 
+                      features=np.mean(self.test, axis=1), max_display=max_display)
+    plt.savefig(os.path.join(out_dir,f'shap_{self.cfg["name"]}.png'))
+    plt.close()

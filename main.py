@@ -1,6 +1,13 @@
+import os
 import pandas as pd
 import wandb
-import os
+import warnings
+from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger # type:ignore
@@ -12,11 +19,7 @@ from modeling.functional import cnn_rotor_model, cnn_stator_model, rnn_rotor_mod
 from utils.data_utils import *
 from utils.configs import *
 from utils.eval_utils import plot_curves, get_metrics
-from explain.feature_importance import PFIExplainer
-
-import warnings
-
-warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+from explain.feature_importance import PFIExplainer, SHAPExplainer
 
 # Limit GPU usage
 total = 49152
@@ -151,18 +154,27 @@ def train_model(model, cfg, load_path):
     session.load_model_weights(load_path)    
     # session.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
     # session.get_model_metrics()
-    explainer = PFIExplainer(session.model, session.cfg)
-    fi = explainer.feature_importance(session.features[-SAMPLE:], session.targets[-SAMPLE:])
-    explainer.plot_pfi(fi, os.path.join(session.out_path, 'pfi'))
+
+    # pfi_explainer = PFIExplainer(session.model, session.cfg)
+    # fi = pfi_explainer.feature_importance(session.features[-SAMPLE:], session.targets[-SAMPLE:])
+    # pfi_explainer.plot_pfi(fi, os.path.join(session.out_path, 'pfi'))
+
+    background = np.concatenate([x for x, _ in session.train_ds.take(1)], axis=0)
+    test = np.concatenate([x for x, _ in session.test_ds.take(1)], axis=0)
+    
+    shap_explainer = SHAPExplainer(session.model, session.cfg, background, test)
+    shap_values = shap_explainer.feature_importance()
+    shap_explainer.plot_shap_values(shap_values, os.path.join(session.out_path, 'shap'), session.features.keys())
+    pd.DataFrame(shap_values).to_csv(os.path.join(session.out_path, f'shap/{session.cfg["name"]}.csv'))
 
 
 
 if __name__ == '__main__':
     N_FEATURES = 135
 
-    # train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5')
-    # train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5')
-    # train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5')
+    train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5')
+    train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5')
+    train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5')
     train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5')
 
     # from multiprocessing import Process
