@@ -30,10 +30,11 @@ if gpus:
         tf.config.experimental.set_virtual_device_configuration(gpu,[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=limit)])
 
 
-class Session:
-    def __init__(self, model, cfg):
+class Pipeline:
+    def __init__(self, model, cfg, feature_names = None):
         self.model = model
         self.cfg = cfg
+        self.feature_names = feature_names
         self.out_path = os.path.join('out',self.cfg['name'])
         print(f"Model: {self.cfg['name']}")
         print(f"Num GPUs Available: {len(tf.config.list_physical_devices('GPU'))}\n")
@@ -52,6 +53,10 @@ class Session:
         y_stator = df_stator[['stator_winding','stator_tooth','stator_yoke']].copy()
         X = df_rotor.drop(['pm'],axis=1).copy()
         X = add_extra_features(X,self.cfg['spans'])
+
+        if self.feature_names is not None:
+            X = X[self.feature_names].copy()
+
         return [X, y_rotor] if self.cfg['target'] == 'rotor' else [X, y_stator]
     
 
@@ -112,8 +117,6 @@ class Session:
         if log:
             wandb.finish()
         
-        # with open(os.path.join(self.out_path,'history_dict'), 'wb') as file_pi:
-        #     pickle.dump(history.history, file_pi)
 
         plot_curves(history, self.out_path)
         self.load_model_weights(os.path.join(self.out_path,'model.h5'))        
@@ -144,32 +147,33 @@ class Session:
 
 
 
-def train_model(model, cfg, load_path):
+def train_model(model, cfg, load_path, save_dir = None, feature_names = None):
     MAX_EPOCHS = 500
     LOG = True
     RESUME = False
     SAMPLE = 500000
 
-    session = Session(model, cfg)
-    session.load_model_weights(load_path)    
-    # session.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    # session.get_model_metrics()
+    p = Pipeline(model, cfg, feature_names)
+    p.load_model_weights(load_path)
+    # p.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
+    # p.get_model_metrics(save_dir)
 
-    # pfi_explainer = PFIExplainer(session.model, session.cfg)
-    # fi = pfi_explainer.feature_importance(session.features[-SAMPLE:], session.targets[-SAMPLE:])
-    # pfi_explainer.plot_pfi(fi, os.path.join(session.out_path, 'pfi'))
+    # pfi_explainer = PFIExplainer(p.model, p.cfg)
+    # fi = pfi_explainer.feature_importance(p.features[-SAMPLE:], p.targets[-SAMPLE:])
+    # pfi_explainer.plot_pfi(fi, os.path.join(p.out_path, 'pfi'))
 
-    background = np.concatenate([x for x, _ in session.train_ds.take(1)], axis=0)
-    test = np.concatenate([x for x, _ in session.test_ds.take(1)], axis=0)
+    background = np.concatenate([x for x, _ in p.train_ds.take(1)], axis=0)
+    test = np.concatenate([x for x, _ in p.test_ds.take(1)], axis=0)
     
-    shap_explainer = SHAPExplainer(session.model, session.cfg, background, test)
+    shap_explainer = SHAPExplainer(p.model, p.cfg, background, test)
     shap_values = shap_explainer.feature_importance()
-    shap_explainer.plot_shap_values(shap_values, os.path.join(session.out_path, 'shap'), session.features.keys())
-    pd.DataFrame(shap_values).to_csv(os.path.join(session.out_path, f'shap/{session.cfg["name"]}.csv'))
+    shap_explainer.plot_shap_values(shap_values, os.path.join(p.out_path, 'shap'), p.features.keys())
+    pd.DataFrame(shap_values).to_csv(os.path.join(p.out_path, f'shap/{p.cfg["name"]}.csv'))
 
 
 
 if __name__ == '__main__':
+
     N_FEATURES = 135
 
     train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5')
