@@ -87,11 +87,24 @@ class SHAPExplainer:
     self.background = background
     self.test = test
 
-  def feature_importance(self):
+  def feature_importance(self, save: bool = False):
+    print('Getting SHAP values...\n')
     e = shap.GradientExplainer(self.model, self.background)
     shap_values = np.array(e.shap_values(self.test))
     shap_values = np.mean(shap_values, axis=(0,2)) # Average out the prediction window
     return shap_values
+  
+  def get_most_important_features(self, shap_values, feature_names, out_dir = None):
+
+    avg_shap_values = np.abs(shap_values).mean(0)
+    shap_df = pd.DataFrame(avg_shap_values, index=feature_names, columns=['shap_value']).sort_values(by='shap_value',ascending=False)
+
+    if out_dir is not None:
+      if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+      shap_df.to_csv(os.path.join(out_dir, f'shap_features_{self.cfg["name"]}.csv'))
+
+    return shap_df      
 
   def plot_shap_values(self, shap_values, out_dir, 
                        feature_names=None, 

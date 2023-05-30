@@ -31,6 +31,9 @@ if gpus:
 
 
 class Pipeline:
+    '''
+    General purpose class for loading data, training and evaluating
+    '''
     def __init__(self, model, cfg, feature_names = None):
         self.model = model
         self.cfg = cfg
@@ -138,8 +141,6 @@ class Pipeline:
 
         metrics = pd.concat([test_metrics, val_metrics, train_metrics], axis=1)
 
-        path = save_dir if save_dir is not None else self.out_path
-
         test_predictions.to_csv(os.path.join(path,'test_predictions.csv'))
         val_predictions.to_csv(os.path.join(path,'val_predictions.csv'))
         train_predictions.to_csv(os.path.join(path,'train_predictions.csv'))
@@ -167,8 +168,9 @@ def train_model(model, cfg, load_path, save_dir = None, feature_names = None):
     
     shap_explainer = SHAPExplainer(p.model, p.cfg, background, test)
     shap_values = shap_explainer.feature_importance()
+    shap_explainer.get_most_important_features(shap_values, p.features.keys(), os.path.join(p.out_path, 'shap'))
     shap_explainer.plot_shap_values(shap_values, os.path.join(p.out_path, 'shap'), p.features.keys())
-    pd.DataFrame(shap_values).to_csv(os.path.join(p.out_path, f'shap/{p.cfg["name"]}.csv'))
+    
 
 
 
@@ -176,22 +178,24 @@ if __name__ == '__main__':
 
     N_FEATURES = 135
 
-    train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5')
-    train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5')
-    train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5')
-    train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5')
+    # train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5', 'out/RNN_rotor')
+    # train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5', 'out/RNN_stator')
+    # train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5', 'out/TCN_rotor')
+    train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5', 'out/TCN_stator')
 
-    # from multiprocessing import Process
+    # import multiprocessing
+
+    # multiprocessing.set_start_method('spawn')
 
     # args = [
-    #     (rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5'),
-    #     (rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5'),
-    #     (cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5'),
-    #     (cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5')
+    #     (rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5', 'out/RNN_rotor'),
+    #     (rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5', 'out/RNN_stator'),
+    #     (cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5', 'out/TCN_rotor'),
+    #     (cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5', 'out/TCN_stator')
     # ]
 
     # for arg in args:
-    #     p = Process(target=train_model, args=arg)
+    #     p = multiprocessing.Process(target=train_model, args=arg)
     #     p.start()
 
 
