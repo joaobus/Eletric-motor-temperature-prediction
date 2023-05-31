@@ -25,6 +25,7 @@ def plot_curves(history, path: str):
     ax2.legend(['train', 'val'], loc='upper left')
     
     plt.savefig(os.path.join(path,'training_curves.png'))
+    plt.close()
     
     
 def get_metrics(model, ds, type: str, index: str = 'value'):

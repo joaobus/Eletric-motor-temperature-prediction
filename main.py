@@ -34,11 +34,11 @@ class Pipeline:
     '''
     General purpose class for loading data, training and evaluating
     '''
-    def __init__(self, model, cfg, feature_names = None):
+    def __init__(self, model, cfg, out_dir = None, feature_names = None):
         self.model = model
         self.cfg = cfg
         self.feature_names = feature_names
-        self.out_path = os.path.join('out',self.cfg['name'])
+        self.out_path = out_dir if out_dir is not None else os.path.join('out',self.cfg['name'])
         print(f"Model: {self.cfg['name']}")
         print(f"Num GPUs Available: {len(tf.config.list_physical_devices('GPU'))}\n")
 
@@ -141,23 +141,22 @@ class Pipeline:
 
         metrics = pd.concat([test_metrics, val_metrics, train_metrics], axis=1)
 
-        test_predictions.to_csv(os.path.join(path,'test_predictions.csv'))
-        val_predictions.to_csv(os.path.join(path,'val_predictions.csv'))
-        train_predictions.to_csv(os.path.join(path,'train_predictions.csv'))
+        # test_predictions.to_csv(os.path.join(path,'test_predictions.csv'))
+        # val_predictions.to_csv(os.path.join(path,'val_predictions.csv'))
+        # train_predictions.to_csv(os.path.join(path,'train_predictions.csv'))
         metrics.to_csv(os.path.join(path,'metrics.csv'))
 
 
 
-def train_model(model, cfg, load_path, save_dir = None, feature_names = None):
-    MAX_EPOCHS = 500
-    LOG = True
-    RESUME = False
-    SAMPLE = 500000
+def train_model(model, cfg, load_path, save_dir = None):
+    
+    feature_names = list(pd.read_csv(f'out/{cfg["name"]}/shap/shap_features_{cfg["name"]}.csv', index_col=0).head(10).index)
+    p = Pipeline(model, cfg, save_dir, feature_names)
+    print(f'Number of features: {len(p.features.keys())} \nFeatures: {feature_names}\n')
 
-    p = Pipeline(model, cfg, feature_names)
-    p.load_model_weights(load_path)
-    # p.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
-    # p.get_model_metrics(save_dir)
+    # p.load_model_weights(load_path)
+    p.compile_and_fit(max_epochs=MAX_EPOCHS, log=LOG, resume_training=RESUME)
+    p.get_model_metrics(save_dir)
 
     # pfi_explainer = PFIExplainer(p.model, p.cfg)
     # fi = pfi_explainer.feature_importance(p.features[-SAMPLE:], p.targets[-SAMPLE:])
@@ -176,12 +175,17 @@ def train_model(model, cfg, load_path, save_dir = None, feature_names = None):
 
 if __name__ == '__main__':
 
-    N_FEATURES = 135
+    N_FEATURES = 10
+    MAX_EPOCHS = 500
+    LOG = True
+    RESUME = False
+    SAMPLE = 500000
 
-    # train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5', 'out/RNN_rotor')
-    # train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5', 'out/RNN_stator')
-    # train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5', 'out/TCN_rotor')
-    train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5', 'out/TCN_stator')
+
+    # train_model(rnn_rotor_model(N_FEATURES), rnn_rotor_cfg, 'out/RNN_rotor/model.h5', 'out/RNN_rotor/less_features')
+    # train_model(rnn_stator_model(N_FEATURES), rnn_stator_cfg, 'out/RNN_stator/model.h5', 'out/RNN_stator/less_features')
+    # train_model(cnn_rotor_model(N_FEATURES), tcn_rotor_cfg, 'out/TCN_rotor/model.h5', 'out/TCN_rotor/less_features')
+    train_model(cnn_stator_model(N_FEATURES), tcn_stator_cfg, 'out/TCN_stator/model.h5', 'out/TCN_stator/less_features')
 
     # import multiprocessing
 
