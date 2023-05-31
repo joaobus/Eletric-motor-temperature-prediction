@@ -39,6 +39,10 @@ class Pipeline:
         self.cfg = cfg
         self.feature_names = feature_names
         self.out_path = out_dir if out_dir is not None else os.path.join('out',self.cfg['name'])
+
+        if not os.path.exists(self.out_path):
+            os.makedirs(self.out_path)
+
         print(f"Model: {self.cfg['name']}")
         print(f"Num GPUs Available: {len(tf.config.list_physical_devices('GPU'))}\n")
 
@@ -76,14 +80,17 @@ class Pipeline:
     def compile_and_fit(self,
                         max_epochs: int = 200,
                         log: bool = False,
-                        resume_training: bool = False):
-            
-        if not os.path.exists(self.out_path):
-            os.makedirs(self.out_path)
+                        resume_training: bool = False,
+                        model_save_dir: str = 'out/models'):
+        
+        if not os.path.exists(model_save_dir):
+            os.makedirs(model_save_dir)
+
+        model_path = os.path.join(model_save_dir, f'{self.cfg["name"]}_{len(self.features.keys())}.h5')
         
         reduce = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=train_cfg['patience'])
         early = EarlyStopping(monitor='val_loss', patience=2*train_cfg['patience'], mode='min')
-        checkpoint = ModelCheckpoint(os.path.join(self.out_path,'model.h5'), monitor='val_loss', save_best_only=False, mode='min')
+        checkpoint = ModelCheckpoint(model_path, monitor='val_loss', save_best_only=False, mode='min')
         csv_logger = CSVLogger(os.path.join(self.out_path,'history_log.csv'), append=resume_training)
         callbacks = [reduce, early, checkpoint, csv_logger]
 
