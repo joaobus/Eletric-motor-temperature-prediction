@@ -31,7 +31,7 @@ In order to load a pretrained model, we can do as follows:
 
 ```
 N_FEATURES = 10
-p = Pipeline(rnn_rotor_model(N_FEATURES), rnn_stator_cfg, feature_names=feature_names)
+p = Pipeline(rnn_rotor_model(N_FEATURES), rnn_stator_cfg)
 p.load_model_weights('out/models/RNN_rotor_10.h5')
 p.get_model_metrics()
 ```
