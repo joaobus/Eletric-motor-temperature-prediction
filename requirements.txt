@@ -1,0 +1,11 @@
+keras==2.12.0
+matplotlib==3.5.1
+numba==0.57.0
+numpy==1.22.0
+pandas==1.4.2
+scikit_learn==1.2.2
+seaborn==0.11.2
+tensorflow==2.12.0
+tqdm==4.64.0
+wandb==0.15.1
+shap==0.41.0
